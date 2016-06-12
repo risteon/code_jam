@@ -16,7 +16,13 @@
 #undef N_DEBUG
 #include <assert.h>
 
+#define loop(x,n) for(std::size_t (x) = 0; (x) < (n); ++(x))
+
+
 using namespace std;
+
+using UInt = uint64_t;
+using Int = int64_t;
 
 int main()
 {

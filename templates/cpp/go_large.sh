@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./jam.out < A-large-practice.in > large-solution.out
+./jam.out < *-large-practice.in > large-solution.out
