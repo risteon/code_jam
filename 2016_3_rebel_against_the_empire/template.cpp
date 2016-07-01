@@ -90,7 +90,7 @@ struct Cluster
           if (explored[unex])
             continue;
 
-          const auto jump = (asteroids[ex]->position - asteroids[unex]->position).squaredNorm();
+          const auto jump = getWeight(ex, unex);
           if (jump < smallest_jump)
           {
             smallest_jump = jump;
@@ -111,8 +111,79 @@ struct Cluster
     return sqrt(max_jump);
   }
 
+  const vector<Asteroid::ConstPtr> getAllReachedAsteroids(Asteroid::ConstPtr start, double max_jump)
+  {
+    max_jump = max_jump*max_jump;
+
+    const auto s = find(asteroids.cbegin(), asteroids.cend(), start);
+    if (s == asteroids.cend())
+      throw (int)3;
+
+    vector<Asteroid::ConstPtr> reached({start});
+    size_t index_start = std::distance(asteroids.cbegin(), s);
+
+    vector<bool> explored(asteroids.size(), false);
+    explored[index_start] = true;
+
+    size_t added;
+    do
+    {
+      added = asteroids.size();
+
+      loop(ex, explored.size())
+      {
+        if (!explored[ex])
+          continue;
+
+        loop(unex, explored.size())
+        {
+          if (explored[unex])
+            continue;
+
+          if (getWeight(ex, unex) <= max_jump)
+          {
+            added = unex;
+            explored[unex] = true;
+            break;
+          }
+          
+        }
+        if (added != asteroids.size())
+          break;
+
+      }
+
+      reached.push_back(asteroids[added]);
+
+    }
+    while (added < asteroids.size());
+
+    return reached;
+  }
+
   vector<Asteroid::Ptr> asteroids;
   Vector3d velocity;
+
+  double getWeight(size_t first, size_t second) const
+  {
+    assert(first != second);
+    const auto min_index = min(first, second);
+    const auto max_index = max(first, second);
+    return weights[min_index][max_index-min_index-1];
+  }
+  void calcWeights()
+  {
+    weights.resize(asteroids.size() - 1);
+    loop(ii, asteroids.size() - 1)
+    {
+      weights[ii].reserve(asteroids.size() - ii - 1); 
+      for (size_t jj = ii + 1; jj < asteroids.size(); ++jj)
+      {
+        weights[ii].push_back((asteroids[ii]->position - asteroids[jj]->position).squaredNorm());
+      }
+    }
+  }
+  vector<vector<double>> weights;
 };
 
 
@@ -161,6 +232,8 @@ int main()
     }
 
     //cout <<"Number of clusters: " <<clusters.size() <<endl;
+    for (auto& a : clusters)
+      a.calcWeights();
 
     if (clusters.size() == 1)
     {
