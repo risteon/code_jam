@@ -74,6 +74,34 @@ double getMinDistanceWithin(Asteroid::ConstPtr a, Asteroid::ConstPtr b, double t
   return (p_a - p_b).norm();
 }
 
+struct Edge
+{
+  Edge(size_t first, size_t second, double weight)
+    : first_vertex(first)
+    , second_vertex(second)
+    , weight(weight)
+  {}
+  size_t first_vertex;
+  size_t second_vertex;
+  double weight;
+
+  bool operator <(const Edge& other) const
+  {
+    if (weight != other.weight)
+      return weight < other.weight;
+    if (first_vertex != other.first_vertex)
+      return first_vertex < other.first_vertex;
+    return second_vertex < other.second_vertex;
+  }
+  bool contains(size_t vertex) const  { return first_vertex == vertex || second_vertex == vertex; }
+  size_t getOther(size_t vertex) const
+  {
+    if (first_vertex == vertex)
+      return second_vertex;
+    return first_vertex;
+  }
+};
+
 struct Cluster
 {
   Cluster() {}
@@ -86,7 +114,7 @@ struct Cluster
     , velocity(asteroid->velocity)
   {}
 
-  double getMaxJumpDistance(Asteroid::ConstPtr start, Asteroid::ConstPtr end)
+  double getMaxJumpDistance(Asteroid::ConstPtr start, Asteroid::ConstPtr end) const
   {
     const auto s = find(asteroids.cbegin(), asteroids.cend(), start);
     if (s == asteroids.cend())
@@ -100,40 +128,34 @@ struct Cluster
 
     size_t index_end = std::distance(asteroids.cbegin(), e);
 
-    vector<bool> explored(asteroids.size(), false);
-    explored[index_start] = true;
+    auto unexplored = edges;
+    set<size_t> explored;
+    explored.insert(index_start);
     double max_jump = 0.0;
-
     size_t added = 0;
     do
     {
-      double smallest_jump = std::numeric_limits<double>::max();
-
-      loop(ex, explored.size())
+      for (auto it = unexplored.begin(); it != unexplored.end(); it++)
       {
-        if (!explored[ex])
+        const auto first_it = explored.find(it->first_vertex);
+        const auto second_it = explored.find(it->second_vertex);
+
+        auto ex = explored.cend();
+        if (first_it != explored.cend())
+          ex = first_it;
+        else if (second_it != explored.cend())
+          ex = second_it;
+        else
           continue;
 
-        loop(unex, explored.size())
-        {
-          if (explored[unex])
-            continue;
+        added = it->getOther(*ex);
+        explored.insert(added);
+        if (it->weight > max_jump)
+          max_jump = it->weight;
+        unexplored.erase(it);
 
-          const auto jump = getWeight(ex, unex);
-          if (jump < smallest_jump)
-          {
-            smallest_jump = jump;
-            added = unex;
-          }
-          
-        }
-
+        break;
       }
-
-      if (smallest_jump > max_jump)
-        max_jump = smallest_jump;
-
-      explored[added] = true;
     }
     while (added != index_end);
 
@@ -209,10 +231,12 @@ struct Cluster
       for (size_t jj = ii + 1; jj < asteroids.size(); ++jj)
       {
         weights[ii].push_back((asteroids[ii]->position - asteroids[jj]->position).squaredNorm());
+        edges.emplace(ii, jj, weights[ii].back());
       }
     }
   }
   vector<vector<double>> weights;
+  set<Edge> edges;
 };
 
 
@@ -268,6 +292,7 @@ int main()
     if (clusters.size() == 1)
     {
       res = clusters.front().getMaxJumpDistance(asteroids[0], asteroids[1]);
+      std::cout <<"Case #" <<(i+1) <<": "  <<setprecision(10) <<res <<endl;
     }
     else
     {
