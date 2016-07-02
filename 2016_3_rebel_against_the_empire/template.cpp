@@ -45,6 +45,35 @@ struct Asteroid
   Vector3d velocity;
 };
 
+double getMinDistance(Asteroid::ConstPtr a, Asteroid::ConstPtr b)
+{
+  const auto w = a->position - b->position;
+  const auto v = a->velocity - b->velocity;
+  const auto t_cpa = -w.dot(v) / v.squaredNorm();
+  const auto p_a = a->position + t_cpa * a->velocity;
+  const auto p_b = b->position + t_cpa * b->velocity;
+  return (p_a - p_b).norm();
+}
+
+double getMinDistanceWithin(Asteroid::ConstPtr a, Asteroid::ConstPtr b, double t_min, double t_max)
+{
+  const auto w = a->position - b->position;
+  const auto v = a->velocity - b->velocity;
+  const auto t_cpa = -w.dot(v) / v.squaredNorm();
+
+  double t;
+  if (t_cpa < t_min)
+    t = t_min;
+  else if (t_cpa > t_max)
+    t = t_max;
+  else
+    t = t_cpa;
+
+  const auto p_a = a->position + t * a->velocity;
+  const auto p_b = b->position + t * b->velocity;
+  return (p_a - p_b).norm();
+}
+
 struct Cluster
 {
   Cluster() {}
@@ -235,9 +264,18 @@ int main()
     for (auto& a : clusters)
       a.calcWeights();
 
+    double res = 0.0;
     if (clusters.size() == 1)
     {
-      double res = clusters.front().getMaxJumpDistance(asteroids[0], asteroids[1]);
+      res = clusters.front().getMaxJumpDistance(asteroids[0], asteroids[1]);
+    }
+    else
+    {
+      if (asteroids[0]->velocity != asteroids[1]->velocity)
+        res = getMinDistanceWithin(asteroids[0], asteroids[1], 0.0, S);
+      else
+        res = -1.0;
+
       std::cout <<"Case #" <<(i+1) <<": "  <<setprecision(10) <<res <<endl;
     }
 
