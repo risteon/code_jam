@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env sh
 
-if [[ ! -e build ]]; then
+if [ ! -e build ]; then
   mkdir build
 fi
 

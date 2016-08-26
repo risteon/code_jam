@@ -1,3 +1,8 @@
-#!/bin/bash
-g++ -std=c++14 -O3 -o jam.out template.cpp
+#!/usr/bin/env bash
+
+if [ ! -e build ]; then
+  mkdir build
+fi
+
+g++ -std=c++14 -O3 -o build/jam.out template.cpp
 
