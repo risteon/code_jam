@@ -1,2 +1,0 @@
-#!/bin/sh
-g++ --std=c++14 -O3 -o getting_the_digits getting_the_digits.cc
