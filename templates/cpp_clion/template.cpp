@@ -13,12 +13,14 @@
 #include <cmath>
 #include <climits>
 #include <numeric>
-#undef N_DEBUG
-#include <assert.h>
+#undef NDEBUG
+#include <cassert>
 
 #include "io_redirect.h"
 
-#define loop(x,n) for(std::size_t (x) = 0; (x) < (n); ++(x))
+#define FOR(i, a, b) for(std::size_t (i) = (a); (i) < (b); ++(i))
+#define REP(i, n) FOR(i, 0, n)
+#define TRACE(x) std::cout << #x <<" = " <<(x) <<std::endl;
 
 
 using namespace std;
